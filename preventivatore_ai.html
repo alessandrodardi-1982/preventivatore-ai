@@ -476,23 +476,20 @@ Regole:
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1000,
+        system: 'Sei un preventivista tecnico. Rispondi SEMPRE e SOLO con JSON valido, senza testo aggiuntivo, senza backtick, senza markdown. Il JSON deve essere direttamente parsabile con JSON.parse().',
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     const data = await response.json();
-    let raw = data.content[0].text.replace(/```json|```/g, '').trim();
-    // Estrai solo il blocco JSON dalla risposta (dalla prima { all'ultima })
+    let raw = data.content[0].text.trim();
+    // Rimuovi eventuali backtick markdown
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    // Estrai solo il blocco JSON dalla prima { all'ultima }
     const jsonStart = raw.indexOf('{');
     const jsonEnd = raw.lastIndexOf('}');
-    if (jsonStart !== -1 && jsonEnd !== -1) {
-      raw = raw.substring(jsonStart, jsonEnd + 1);
-    }
-    // Sanitizza caratteri di controllo che rompono JSON.parse
-    raw = raw.replace(/[\u0000-\u001F\u007F]/g, (c) => {
-      const allowed = {'\n':'\\n','\r':'\\r','\t':'\\t'};
-      return allowed[c] || '';
-    });
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('Nessun JSON trovato nella risposta');
+    raw = raw.substring(jsonStart, jsonEnd + 1);
     const prev = JSON.parse(raw);
     renderPreventivo(prev, cliente);
 

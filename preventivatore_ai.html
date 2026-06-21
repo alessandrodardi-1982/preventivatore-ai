@@ -465,7 +465,9 @@ Regole:
 - Includi i ricambi probabilmente necessari in base alla descrizione
 - I numeri devono essere coerenti (quantita × prezzo_unitario = totale)
 - totale_iva = totale_imponibile × 0.22, arrotondato
-- totale_complessivo = totale_imponibile + totale_iva`;
+- totale_complessivo = totale_imponibile + totale_iva
+- Nei valori stringa NON usare apostrofi o virgolette — sostituisci con spazi o parafrasa (es. "dell impianto" invece di "dell'impianto")
+- Rispondi SOLO con il JSON valido, niente testo prima o dopo`;
 
   try {
     const response = await fetch('/api/claude', {
@@ -479,7 +481,18 @@ Regole:
     });
 
     const data = await response.json();
-    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    let raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    // Estrai solo il blocco JSON dalla risposta (dalla prima { all'ultima })
+    const jsonStart = raw.indexOf('{');
+    const jsonEnd = raw.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      raw = raw.substring(jsonStart, jsonEnd + 1);
+    }
+    // Sanitizza caratteri di controllo che rompono JSON.parse
+    raw = raw.replace(/[\u0000-\u001F\u007F]/g, (c) => {
+      const allowed = {'\n':'\\n','\r':'\\r','\t':'\\t'};
+      return allowed[c] || '';
+    });
     const prev = JSON.parse(raw);
     renderPreventivo(prev, cliente);
 

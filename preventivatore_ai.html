@@ -475,7 +475,7 @@ Regole:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 2000,
         system: 'Sei un preventivista tecnico. Rispondi SEMPRE e SOLO con JSON valido, senza testo aggiuntivo, senza backtick, senza markdown. Il JSON deve essere direttamente parsabile con JSON.parse().',
         messages: [{ role: 'user', content: prompt }]
       })
@@ -483,6 +483,7 @@ Regole:
 
     const data = await response.json();
     let raw = data.content[0].text.trim();
+    console.log('RAW RESPONSE:', raw);
     // Rimuovi eventuali backtick markdown
     raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     // Estrai solo il blocco JSON dalla prima { all'ultima }
